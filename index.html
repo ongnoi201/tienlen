@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Tiến Lên Miền Nam</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=0.8, user-scalable=no">
     <link rel="shortcut icon" href="images/icon64.png" type="image/png">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles/style.css">
@@ -19,7 +20,9 @@
         <ul id="message-win"></ul>
     </div>
     <div id="game-area">
-         <center><h1 id="namegame">Tiến Lên Miền Nam</h1></center>
+        <center>
+            <h3 id="namegame">Tiến Lên Miền Nam</h3>
+        </center>
         <div id="deck-center">
             <div class="deck-stack"></div>
         </div>
@@ -78,7 +81,13 @@
 
         <div></div>
     </div>
-
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('✅ Service Worker registered'))
+                .catch(err => console.error('❌ Service Worker failed:', err));
+        }
+    </script>
 </body>
 
 </html>

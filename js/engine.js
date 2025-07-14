@@ -89,13 +89,13 @@ function updateScoreboard() {
     if (!ul) return;
     ul.innerHTML = '';
     [...Array(state.players.length).keys()]
-        .sort((a, b) => scores[b] - scores[a]) 
-        .forEach(i => {               
+        .sort((a, b) => scores[b] - scores[a])
+        .forEach(i => {
             const p = state.players[i];
-        const li = document.createElement('li');
-        li.innerHTML = `<span>${p.name}</span><span>${scores[i]} 🌕</span>`;
-        ul.appendChild(li);
-    });
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${p.name}</span><span>${scores[i]} 🌕</span>`;
+            ul.appendChild(li);
+        });
 }
 
 function deal() {
@@ -551,8 +551,8 @@ function handleSpecialScore(type, who, target) {
         playSound('chop');
         const p = stacked ? 20 : 10;
         scores[who] += p; scores[target] -= p;
-        showScoreEffect(who, (stacked?'+20':'+10'));
-        showScoreEffect(target, (stacked?'-20':'-10'));
+        showScoreEffect(who, (stacked ? '+20' : '+10'));
+        showScoreEffect(target, (stacked ? '-20' : '-10'));
     }
     if (type === 'chop2') {
         playSound('chop');
@@ -619,7 +619,7 @@ let deckstack = document.querySelector('.deck-stack');
 let body = document.body;
 const area = document.getElementById('game-area');
 settings.cardBack && settings.cardBack === 'red' && deckstack.classList.add('card-red');
-settings.background && body.style.background == 'linear-gradient(90deg, '+ settings.background +' 50%, #fff 100%);';
+settings.background && body.style.background == 'linear-gradient(90deg, ' + settings.background + ' 50%, #fff 100%);';
 
 
 // Hiệu ứng chia bài
@@ -629,9 +629,8 @@ function animateDeal(callback) {
     const playerHand = document.getElementById('player-hand');
     // Tính vị trí đến của 4 người chơi (center của avatar)
     const getTarget = idx => {
-        // 0: player (dưới), 1: left, 2: top, 3: right
         const el = [
-            playerHand,
+            document.querySelector('.player-avatar'), // player
             botHands.querySelector('.bot-left .avatar'),
             botHands.querySelector('.bot-top .avatar'),
             botHands.querySelector('.bot-right .avatar')

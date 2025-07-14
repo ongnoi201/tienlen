@@ -95,13 +95,12 @@
     left: 50%;
     top: calc(50% + 80px);
     transform: translateX(-50%);
-    font-size: 20px;
+    font-size: 18px;
     padding: 10px 30px;
     border-radius: 8px;
     border: none;
     background: #fff;
     color: #1976d2;
-    font-weight: bold;
     box-shadow: 0 2px 8px #2222;
     cursor: pointer;
     z-index: 21;
@@ -192,8 +191,8 @@ body {
 
 .card-back {
     display: flex;
-    width: 36px;
-    height: 54px;
+    width: 55px;
+    height: 75px;
     border: 1px solid #333;
     border-radius: 5px;
     margin: 0 -18px 0 0;
@@ -251,7 +250,7 @@ body {
 #player-controls {
     position: absolute;
     left: 50%;
-    bottom: 100px;
+    bottom: 120px;
     /* cách đáy 90 px – vừa nằm trên tay bài (bottom:20 + height:60 + padding) */
     transform: translateX(-50%);
     display: flex;
@@ -261,7 +260,7 @@ body {
 }
 
 #player-controls button {
-    padding: 5px 10px;
+    padding: 8px 13px;
     font-size: 14px;
     z-index: 10;
     position: relative;
@@ -283,16 +282,16 @@ body {
 
 .card {
     display: inline-block;
-    width: 40px;
-    height: 60px;
+    width: 55px;
+    height: 75px;
     background: #fff;
     color: #000;
     border: 1px solid #333;
     border-radius: 5px;
     margin: 2px;
-    line-height: 60px;
+    line-height: 80px;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 24px;
     cursor: pointer;
     user-select: none;
     position: relative;
@@ -316,7 +315,7 @@ body {
 .card.selected {
     border: 1px solid rgb(91, 255, 26);
     background: #e9ffe0;
-    transform: translateY(-40px) scale(1.08);
+    transform: translateY(-50px);
     z-index: 2;
 }
 
