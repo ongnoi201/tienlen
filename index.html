@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tiến Lên Miền Nam</title>
+    <link rel="shortcut icon" href="images/icon64.png" type="image/png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/AlertifyJS/1.13.1/css/alertify.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/AlertifyJS/1.13.1/alertify.min.js"></script>
+</head>
+
+<body>
+    <div id="scoreboard">
+        <ul id="score-list"></ul>
+    </div>
+    <div id="message">
+        <ul id="message-win"></ul>
+    </div>
+    <div id="game-area">
+         <center><h1 id="namegame">Tiến Lên Miền Nam</h1></center>
+        <div id="deck-center">
+            <div class="deck-stack"></div>
+        </div>
+        <button id="deal-btn">Chia bài</button>
+        <div id="bot-hands" style="display:none"></div>
+        <div id="table" style="display:none"></div>
+        <div id="player-hand" style="display:none"></div>
+        <div id="player-controls" style="display:none">
+            <button id="play-btn">Đánh bài</button>
+            <button id="pass-btn">Bỏ lượt</button>
+        </div>
+    </div>
+    <script type="module" src="js/engine.js"></script>
+    <!-- Nút mở Cài đặt -->
+    <button id="settings-btn">⚙️</button>
+
+    <!-- Modal Cài đặt -->
+    <div id="settings-modal">
+        <div id="setting-left">
+            <h2>Cài đặt</h2>
+            <div class="setting-content">
+                <label>🎨 Màu nền: </label>
+                <input type="color" id="bg-color">
+            </div>
+            <div class="setting-content">
+                <label>🃏 Màu bàn chơi: </label>
+                <input type="color" id="table-color">
+            </div>
+            <div class="setting-content">
+                <label>⏱️ Thời gian bot (ms): </label>
+                <input type="number" id="bot-delay" min="0">
+            </div>
+            <div class="setting-content">
+                <label>🎴 Giao diện thẻ bài: </label>
+                <select id="card-style">
+                    <option value="classic">Cổ điển</option>
+                    <option value="modern">Hiện đại</option>
+                </select>
+            </div>
+            <div class="setting-content">
+                <label>🔙 Mặt sau thẻ: </label>
+                <select id="card-back">
+                    <option value="red">Đỏ</option>
+                    <option value="blue">Xanh</option>
+                </select>
+            </div>
+        </div>
+        <div id="setting-right">
+            <h2>Người chơi</h2>
+            <div id="players-settings"></div>
+            <div id="btn-model">
+                <button id="save-settings">Lưu</button>
+                <button id="close-settings">Đóng</button>
+            </div>
+        </div>
+
+        <div></div>
+    </div>
+
+</body>
+
+</html>

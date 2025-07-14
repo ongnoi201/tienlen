@@ -1,0 +1,484 @@
+#scoreboard {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    background: #ffffff7c;
+    color: #1976d2;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px #2222;
+    padding: 10px;
+    width: fit-content;
+    min-width: 100px;
+    z-index: 100;
+    font-size: 12px;
+    text-align: left;
+}
+
+#score-list,
+#message-win {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#score-list li,
+#message-win li {
+    margin-bottom: 4px;
+    font-weight: bold;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+#message {
+    position: absolute;
+    top: 20px;
+    left: 30px;
+    background: #ffffff7c;
+    color: #060700;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px #2222;
+    padding: 10px;
+    min-width: 100px;
+    z-index: 100;
+    font-size: 12px;
+    text-align: left;
+}
+
+#deck-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    width: 60px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.deck-stack {
+    width: 60px;
+    height: 90px;
+    background: linear-gradient(135deg, #1976d2 60%, #fff 100%);
+    border: 2px solid #333;
+    border-radius: 8px;
+    box-shadow: 2px 4px 12px #2228;
+    position: relative;
+}
+
+.deal-card {
+    width: 60px;
+    height: 90px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    box-shadow: 2px 4px 12px #2228;
+    position: absolute;
+    left: 0;
+    top: 0;
+    transition: transform 0.7s cubic-bezier(.7, 1.7, .5, 1), opacity 0.3s;
+    z-index: 100;
+}
+
+.deal-card .card-red {
+    background: linear-gradient(135deg, #ec333c 50%, #fff 100%);
+}
+
+.deal-card .card-blue {
+    background: linear-gradient(135deg, #1976d2 50%, #fff 100%);
+}
+
+#deal-btn {
+    position: absolute;
+    left: 50%;
+    top: calc(50% + 80px);
+    transform: translateX(-50%);
+    font-size: 20px;
+    padding: 10px 30px;
+    border-radius: 8px;
+    border: none;
+    background: #fff;
+    color: #1976d2;
+    font-weight: bold;
+    box-shadow: 0 2px 8px #2222;
+    cursor: pointer;
+    z-index: 21;
+    transition: background 0.2s, color 0.2s;
+}
+
+#deal-btn:active {
+    background: #1976d2;
+    color: #fff;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    --bg:
+    ;
+    background: var(--bg);
+    color: #fff;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+#game-area {
+    margin: 0 auto;
+    width: 100%;
+    height: 100vh;
+    /* background: rgb(31, 151, 31); */
+    border-radius: 10px;
+    padding: 0;
+    position: relative;
+    min-width: 800px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+#bot-hands {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.bot-top {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0;
+    margin: 2px auto;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    min-width: 250px;
+}
+
+.bot-left {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 190px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    z-index: 2;
+}
+
+.bot-right {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 190px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    z-index: 2;
+}
+
+.card-back {
+    display: flex;
+    width: 36px;
+    height: 54px;
+    border: 1px solid #333;
+    border-radius: 5px;
+    margin: 0 -18px 0 0;
+    box-shadow: 1px 1px 2px #222;
+    position: absolute;
+}
+
+.card-red {
+    background: linear-gradient(135deg, #ec333c 50%, #fff 100%);
+}
+
+.card-blue {
+    background: linear-gradient(135deg, #1976d2 50%, #fff 100%);
+}
+
+.bot-left .card-back,
+.bot-right .card-back {
+    margin: -18px 0 0 0;
+}
+
+.bot-left .card-back {
+    margin-left: 0;
+}
+
+.bot-right .card-back {
+    margin-right: 0;
+}
+
+#table {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    height: 160px;
+    background-color: #2e7d32;
+    border-radius: 20px;
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;
+    z-index: 3;
+}
+
+#player-hand {
+    position: absolute;
+    left: 50%;
+    bottom: -20px;
+    transform: translateX(-50%);
+    width: 100%;
+    min-width: 320px;
+    min-height: 60px;
+    z-index: 4;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+#player-controls {
+    position: absolute;
+    left: 50%;
+    bottom: 100px;
+    /* cách đáy 90 px – vừa nằm trên tay bài (bottom:20 + height:60 + padding) */
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 5;
+    /* cao hơn bot-hands (2) nhưng thấp hơn message (10) nếu muốn */
+}
+
+#player-controls button {
+    padding: 5px 10px;
+    font-size: 14px;
+    z-index: 10;
+    position: relative;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    color: #fff;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+#play-btn {
+    background-color: #0b831b;
+}
+
+#pass-btn {
+    background-color: #d32f2f;
+}
+
+.card {
+    display: inline-block;
+    width: 40px;
+    height: 60px;
+    background: #fff;
+    color: #000;
+    border: 1px solid #333;
+    border-radius: 5px;
+    margin: 2px;
+    line-height: 60px;
+    font-weight: bold;
+    font-size: 18px;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+    box-shadow: 0 1px 2px #2222;
+    transition: transform 0.1s;
+}
+
+.classic {
+    background: #e8ff19;
+    box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
+}
+
+.modern {
+    background: rgb(161, 235, 161);
+    box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
+}
+
+.card.selected {
+    border: 1px solid rgb(91, 255, 26);
+    background: #e9ffe0;
+    transform: translateY(-40px) scale(1.08);
+    z-index: 2;
+}
+
+.card.red {
+    color: #d32f2f;
+}
+
+.avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    background: #eee;
+    box-shadow: 0 2px 6px #2224;
+    object-fit: cover;
+    position: absolute;
+    z-index: 10;
+    transition: border 0.2s;
+}
+
+.bot-top .avatar {
+    left: 50%;
+    top: -38px;
+    transform: translateX(-50%);
+    position: absolute;
+}
+
+.bot-left .avatar {
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    position: absolute;
+}
+
+.bot-right .avatar {
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    position: absolute;
+}
+
+.player-avatar-wrap {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 38px;
+    height: 38px;
+    z-index: 10;
+}
+
+.player-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    background: #eee;
+    box-shadow: 0 2px 6px #2224;
+    object-fit: cover;
+    position: absolute;
+    left: 0;
+    bottom: -46px;
+    transition: border 0.2s;
+}
+
+.avatar.active,
+.player-avatar.active {
+    border: 3px solid #ffeb3b;
+    box-shadow: 0 0 8px #ffeb3b, 0 2px 6px #2224;
+}
+
+
+/* ========= Settings icon ========= */
+#settings-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 40px;
+    height: 40px;
+    font-size: 28px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 999;
+}
+
+/* Modal nền mờ */
+#settings-modal {
+    visibility: hidden;
+    display: flex;
+    position: absolute;
+    top: 50px;
+    z-index: 999;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    background: #000;
+}
+
+/* Hộp nội dung */
+.setting-content {
+    color: #fff;
+    padding: 10px 30px;
+    border-radius: 10px;
+    width: 400px;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: Arial, sans-serif;
+}
+
+/* Nút đóng */
+.setting-content .close {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* Tiêu đề */
+.setting-content h2 {
+    margin-top: 0;
+    text-align: center;
+}
+
+
+.setting-content label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.setting-content input,
+.setting-content select {
+    width: 70px;
+    height: 25px;
+}
+
+#btn-model {
+    display: flex;
+    justify-content: right;
+    gap: 10px;
+    position: absolute;
+    bottom: 70px;
+    right: 60px;
+}
+
+#btn-model button {
+    padding: 10px 16px;
+    border-radius: 5px;
+    border: none;
+    color: #fff;
+}
+
+#save-settings {
+    background-color: #0b831b;
+}
+
+#close-settings {
+    background-color: rgb(173, 118, 14);
+}
