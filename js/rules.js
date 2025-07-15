@@ -41,7 +41,7 @@ export function canBeat(prev,next){
     /* --- Chặt 2 (single hoặc đôi 2) --- */
     if(a.type==='single' && prev[0].rank===15){
         if(b.type==='four') return 'chop2';
-        if(b.type==='dseq' && next.length===6) return 'chop3seq';  // 3 đôi thông
+        if(b.type==='dseq' && next.length>=6) return 'chop3seq';  // 3 đôi thông
         if(b.type==='single' && next[0].rank===15){
             return SUITS.indexOf(next[0].suit) > SUITS.indexOf(prev[0].suit);
         }

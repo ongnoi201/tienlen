@@ -481,3 +481,10 @@ body {
 #close-settings {
     background-color: rgb(173, 118, 14);
 }
+
+.card-fly{
+  position:fixed;
+  transition:transform .55s ease, opacity .55s ease;
+  pointer-events:none;
+  z-index:1000000;   /* cao hơn avatar, card-back */
+}

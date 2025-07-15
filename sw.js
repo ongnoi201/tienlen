@@ -1,19 +1,5 @@
 const CACHE_NAME = 'tienlen-v1';
 const ASSETS_TO_CACHE = [
-  "./index.html",
-  "./manifest.json",
-  "./sw.js",
-
-  // JavaScript files
-  "./js/config.js",
-  "./js/engine.js",
-  "./js/rules.js",
-  "./js/settings.js",
-  "./js/utils.js",
-
-  // CSS
-  "./styles/style.css",
-
   // Audio files
   "./audio/chia.mp3",
   "./audio/click.mp3",
