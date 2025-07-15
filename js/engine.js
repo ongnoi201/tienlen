@@ -482,9 +482,12 @@ async function botPlay() {
             handleSpecialScore(specialBeat, specialTarget, idx);
         }
 
+        // Kiểm tra bot hết bài
         if (!bot.hand.length && !state.ranks.includes(idx)) {
             playSound('win');
             state.ranks.push(idx);
+            nextTurn();
+            return;
         }
     } else {
         // Không đánh được → Bỏ lượt
@@ -499,15 +502,6 @@ async function botPlay() {
     }
 
     render();
-
-    // Kiểm tra bot hết bài
-    if (!bot.hand.length && !state.ranks.includes(idx)) {
-        playSound('win');
-        state.ranks.push(idx);
-        nextTurn();
-        return;
-    }
-
     nextTurn();
 }
 
