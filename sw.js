@@ -1,6 +1,5 @@
 const CACHE_NAME = 'tienlen-v1';
 const ASSETS_TO_CACHE = [
-  // Audio files
   "./audio/chia.mp3",
   "./audio/click.mp3",
   "./audio/danh.mp3",
@@ -9,8 +8,9 @@ const ASSETS_TO_CACHE = [
   "./audio/may-ha-buoi.mp3",
   "./audio/ngu-ne.mp3",
   "./audio/thua-di-cung.mp3",
+  "./audio/khongco.mp3",
+  "./audio/boqua.mp3",
 
-  // You may have image files — assuming common extensions:
   "./images/icon64.png", 
   "./images/icon128.png", 
   "./images/icon512.png", 

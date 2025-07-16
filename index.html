@@ -36,43 +36,54 @@
         </div>
     </div>
     <script type="module" src="js/engine.js"></script>
-    <!-- Nút mở Cài đặt -->
-    <button id="settings-btn">⚙️</button>
 
-    <!-- Modal Cài đặt -->
+    <button id="settings-btn">⚙️</button>
     <div id="settings-modal">
         <div id="setting-left">
             <h2>Cài đặt</h2>
             <div class="setting-content">
-                <label>🎨 Màu nền: </label>
+                <label>🎨 Màu nền (20🌕): </label>
                 <input type="color" id="bg-color">
             </div>
             <div class="setting-content">
-                <label>🃏 Màu bàn chơi: </label>
+                <label>🃏 Màu bàn chơi (20🌕): </label>
                 <input type="color" id="table-color">
             </div>
             <div class="setting-content">
-                <label>⏱️ Thời gian bot (ms): </label>
+                <label>⏱️ Thời gian bot ms (20🌕): </label>
                 <input type="number" id="bot-delay" min="0">
             </div>
             <div class="setting-content">
-                <label>🎴 Giao diện thẻ bài: </label>
+                <label>🎴 Giao diện thẻ bài (20🌕): </label>
                 <select id="card-style">
                     <option value="classic">Cổ điển</option>
                     <option value="modern">Hiện đại</option>
                 </select>
             </div>
             <div class="setting-content">
-                <label>🔙 Mặt sau thẻ: </label>
+                <label>🔙 Mặt sau thẻ (20🌕): </label>
                 <select id="card-back">
                     <option value="red">Đỏ</option>
                     <option value="blue">Xanh</option>
                 </select>
             </div>
+            <div class="setting-content">
+                <label>⚜️ Hack (500🌕): </label>
+                <input type="checkbox" id="champion-mode">
+            </div>
+            <div class="setting-content">
+                <label>🎶 Nhạc nền (5🌕): </label>
+                <input type="checkbox" id="background-music">
+            </div>
+            <div class="setting-content">
+                <label>🔊 Âm thanh game (5🌕): </label>
+                <input type="checkbox" id="game-sound">
+            </div>
         </div>
         <div id="setting-right">
-            <h2>Người chơi</h2>
+            <h2>Người chơi (50🌕)</h2>
             <div id="players-settings"></div>
+            <p id="changeInputCost"></p>
             <div id="btn-model">
                 <button id="save-settings">Lưu</button>
                 <button id="close-settings">Đóng</button>

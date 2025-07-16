@@ -155,12 +155,8 @@ body {
     padding: 0;
     margin: 2px auto;
     height: 60px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
     z-index: 2;
-    min-width: 250px;
+    min-width: 270px;
 }
 
 .bot-left {
@@ -170,9 +166,6 @@ body {
     transform: translateY(-50%);
     width: 60px;
     height: 190px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
     z-index: 2;
 }
 
@@ -183,9 +176,6 @@ body {
     transform: translateY(-50%);
     width: 60px;
     height: 190px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
     z-index: 2;
 }
 
@@ -251,12 +241,10 @@ body {
     position: absolute;
     left: 50%;
     bottom: 120px;
-    /* cách đáy 90 px – vừa nằm trên tay bài (bottom:20 + height:60 + padding) */
     transform: translateX(-50%);
     display: flex;
     gap: 12px;
     z-index: 5;
-    /* cao hơn bot-hands (2) nhưng thấp hơn message (10) nếu muốn */
 }
 
 #player-controls button {
@@ -388,7 +376,6 @@ body {
 }
 
 
-/* ========= Settings icon ========= */
 #settings-btn {
     position: absolute;
     top: 10px;
@@ -416,10 +403,9 @@ body {
     background: #000;
 }
 
-/* Hộp nội dung */
 .setting-content {
     color: #fff;
-    padding: 10px 30px;
+    padding: 6px 30px;
     border-radius: 10px;
     width: 400px;
     max-width: 500px;
@@ -430,7 +416,6 @@ body {
     font-family: Arial, sans-serif;
 }
 
-/* Nút đóng */
 .setting-content .close {
     position: absolute;
     right: 15px;
@@ -439,7 +424,6 @@ body {
     cursor: pointer;
 }
 
-/* Tiêu đề */
 .setting-content h2 {
     margin-top: 0;
     text-align: center;
@@ -482,9 +466,15 @@ body {
     background-color: rgb(173, 118, 14);
 }
 
-.card-fly{
-  position:fixed;
-  transition:transform .55s ease, opacity .55s ease;
-  pointer-events:none;
-  z-index:1000000;   /* cao hơn avatar, card-back */
+.card-fly {
+    position: fixed;
+    transition: transform .55s ease, opacity .55s ease;
+    pointer-events: none;
+    z-index: 1000000;
+}
+
+.ajs-message.ajs-visible {
+    width: 200px !important;
+    padding: 10px 0px !important;
+    border-radius: 10px !important;
 }

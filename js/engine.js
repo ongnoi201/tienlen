@@ -1,8 +1,9 @@
 import { createDeck, sortHand, cardToString, clone, highestSuitOfMaxRank } from './utils.js';
 import { getHandType, canBeat, isStraight, isDoubleSeq } from './rules.js';
-import { settings, loadSettings, saveSettings, applySettings, populateSettingsModal } from './settings.js';
-import { playSound, getStartRect, flyCard, showScoreEffect, loadScores, saveScores } from './gameHelpers.js';
+import { settings, loadSettings, saveSettings, applySettings, populateSettingsModal, collectSettingsFromModal } from './settings.js';
+import { playSound, getStartRect, flyCard, loadScores, saveScores } from './gameHelpers.js';
 import { BASE_WEIGHT, countTwos, isBomb, getGameStage, scoreMove } from './aiHelpers.js';
+import { CHOP_SCORE } from './config.js';
 
 /* Danh sách mặc định cho người chơi */
 const BASE_PLAYERS = [
@@ -13,6 +14,9 @@ const BASE_PLAYERS = [
 ]
 
 /* ==== TẢI CẤU HÌNH VÀ ĐIỂM SỐ ===== */
+alertify.set('notifier', 'position', 'top-left');
+alertify.set('notifier', 'delay', 3);
+
 function updateScoreboard() {
     const ul = document.getElementById('score-list');
     if (!ul) return;
@@ -27,6 +31,9 @@ function updateScoreboard() {
         });
 }
 let scores = loadScores();
+let costSettings = 0;
+let changedInputs = new Set();
+
 applySettings(settings);
 
 
@@ -35,7 +42,7 @@ applySettings(settings);
 export const state = {
     players: BASE_PLAYERS.map((base, i) => ({
         ...base,
-        ...settings.players[i],
+        ...((settings.players?.[i]) ?? {}),
         hand: []
     })),
     current: 0,
@@ -52,17 +59,67 @@ export const state = {
 };
 
 
+function takeCards(deck, rank, count, bucket) {
+    for (let i = deck.length - 1; i >= 0 && count > 0; i--) {
+        if (deck[i].rank === rank) {
+            bucket.push(deck[i]);
+            deck.splice(i, 1);
+            count--;
+        }
+    }
+}
+
+function pickChampionSpecial(deck) {
+    const result = [];
+    const scenario = Math.floor(Math.random() * 3);
+
+    switch (scenario) {
+        case 0:
+            takeCards(deck, 13, 2, result);  // K
+            takeCards(deck, 14, 2, result);  // A
+            takeCards(deck, 15, 2, result);  // 2
+            break;
+
+        case 1:
+            takeCards(deck, 14, 2, result);  // A A
+            const fourRank = 11 + Math.floor(Math.random() * 3); // J / Q / K
+            takeCards(deck, fourRank, 4, result);
+            break;
+
+        default:
+            takeCards(deck, 14, 4, result);  // A A A A
+            takeCards(deck, 15, 2, result);  // 2 2
+    }
+    return result;
+}
 
 /* === CHIA BÀI VÀ XÁC ĐỊNH NGƯỜI ĐI TRƯỚC === */
 function deal() {
+    state.players.forEach(p => p.hand = []);
     const deck = createDeck();
-    deck.sort(() => Math.random() - 0.5);
-    for (let i = 0; i < 52; i++) state.players[i % 4].hand.push(deck[i]);
-    state.players.forEach(p => sortHand(p.hand));
 
-    // Xác định người đi trước
+    if (settings.champion && settings.champion == 1) {
+        const special = pickChampionSpecial(deck);
+        state.players[0].hand.push(...special);
+    }
+
+    deck.sort(() => Math.random() - 0.5);
+    const need = [
+        13 - state.players[0].hand.length,
+        13,
+        13,
+        13,
+    ];
+
+    let idx = 0;
+    for (const card of deck) {
+        while (need[idx] === 0) idx = (idx + 1) % 4;
+        state.players[idx].hand.push(card);
+        need[idx]--;
+    }
+
+    state.players.forEach(p => sortHand(p.hand));
     if (state.nextStarter === null || state.nextStarter === undefined) {
-        // Lần đầu: ai giữ 3♠ thì đi trước
         for (let i = 0; i < 4; i++) {
             if (state.players[i].hand.some(c => c.rank === 3 && c.suit === '\u2660')) {
                 state.current = i;
@@ -70,9 +127,8 @@ function deal() {
             }
         }
     } else {
-        state.current = state.nextStarter; // người thắng ván trước đi trước
+        state.current = state.nextStarter;
     }
-
     if (state.players[state.current].bot) {
         setTimeout(botPlay, settings && settings.botDelay ? settings.botDelay : 1000);
     }
@@ -82,7 +138,6 @@ function deal() {
 
 /* ====== BẮT ĐẦU GAME ====== */
 function render() {
-    // Tạo giao diện bot
     const bots = document.getElementById('bot-hands');
     bots.innerHTML = `
         <div class="bot-top">
@@ -108,13 +163,11 @@ function render() {
         </div>
     `;
 
-    // Bàn
     const table = document.getElementById('table');
     table.innerHTML = state.lastPlayed.map(c =>
         `<span class="card${c.suit === '♥' || c.suit === '♦' ? ' red' : ''} ${settings.cardStyle && settings.cardStyle === 'classic' ? 'classic' : 'modern'}">${cardToString(c)}</span>`
     ).join('');
 
-    // Tay người
     const hand = document.getElementById('player-hand');
     hand.innerHTML = '';
     state.players[0].hand.forEach((c, idx) => {
@@ -123,25 +176,19 @@ function render() {
         hand.innerHTML += `<span class="card ${settings.cardStyle && settings.cardStyle === 'classic' ? 'classic' : 'modern'} ${sel}${red ? ' ' + red : ''}" data-idx="${idx}">${cardToString(c)}</span>`;
     });
 
-    // Ẩn/hiện nút đánh và bỏ lượt
     const controls = document.getElementById('player-controls');
     if (controls) {
-        // Ẩn nếu đã về đích
         controls.style.display =
             (state.current === 0 && !state.winner &&
                 !state.ranks.includes(0)) ? 'flex' : 'none';
     }
 
-    // Thông báo xếp hạng và úp dách
     let msg = '';
-
     if (state.ranks.length >= 4) {
         msg = state.ranks.map((idx, i) => {
             return `<li>${i + 1}. ${state.players[idx].name}</li>`;
         }).join('');
 
-
-        // Tính điểm theo thứ hạng
         let add = [10, 5, 1, 0];
         state.ranks.forEach((idx, rank) => {
             scores[idx] += add[rank];
@@ -149,10 +196,7 @@ function render() {
         saveScores(scores);
         updateScoreboard();
 
-        /* --- GHI NHỚ NGƯỜI THẮNG ĐỂ VÁN SAU ĐI TRƯỚC --- */
         state.nextStarter = state.ranks[0];
-
-        // Hiện lại bộ bài và nút chia bài sau khi kết thúc ván
         setTimeout(() => {
             document.getElementById('deck-center').style.display = '';
             document.getElementById('deal-btn').style.display = '';
@@ -164,7 +208,6 @@ function render() {
             document.getElementById('namegame').style.display = '';
             document.getElementById('settings-btn').style.display = '';
 
-            // Reset state cho ván mới
             state.players.forEach(p => p.hand = []);
             state.current = 0;
             state.lastPlayed = [];
@@ -175,70 +218,45 @@ function render() {
             state.skipped = [false, false, false, false];
             state.played = [false, false, false, false];
             state.ranks = [];
-        }, 5000);
+        }, 3000);
     } else if (state.ranks.length > 0) {
         msg = state.ranks.map((idx, i) =>
             `<li>${i + 1}. ${state.players[idx].name}</li>`
-        )
+        ).join('');
     }
     document.getElementById('message-win').innerHTML =
-        msg || (state.winner ? `Người thắng: ${state.winner}` : `Lượt: ${state.players[state.current].name}`);
+        msg || `Lượt: ${state.players[state.current].name}`;
     updateScoreboard();
 }
 
 /* ======= ĐIỀU KHIỂN LƯỢT ======= */
 function nextTurn() {
-    // Nếu đã có 3 người về đích thì kết thúc game
     if (state.ranks.length >= 3) {
         if (!state.winner) {
             const lastIdx = state.players.findIndex((p, i) => !state.ranks.includes(i));
             if (lastIdx !== -1) state.ranks.push(lastIdx);
             state.winner = state.players[state.ranks[0]].name;
         }
-
         render();
         return;
     }
 
-
-    // Đảo chiều: ngược kim đồng hồ
     let next = (state.current + 3) % 4;
-    // Bỏ qua tất cả người đã về đích
     while (state.ranks.includes(next)) {
-        next = (next + 3) % 4;           // ngược kim đồng hồ
+        next = (next + 3) % 4;
     }
     state.current = next;
 
-    // Hết bài => về đích
     if (state.players[state.current].hand.length === 0 && !state.ranks.includes(state.current)) {
         state.ranks.push(state.current);
-        // Nếu vừa có người thắng đầu tiên -> kiểm tra úp dách
-        if (state.ranks.length === 1) {
-            state.players.forEach((p, i) => {
-                if (!state.played[i] && p.hand.length === 13 && !state.ranks.includes(i)) {
-                    // Bị úp dách
-                    state.ranks.push(i);             // xếp bét
-                    scores[i] -= 5;                  // trừ điểm
-                    state.skipped[i] = true;         // không được chơi nữa
-                }
-            });
-            saveScores(scores);
-            updateScoreboard();
-        }
-
         nextTurn();
         return;
     }
 
-    // Nếu là người chơi đã về đích thì tự động bỏ qua (đã xử lý ở trên)
-    // 3 người pass → bàn trống
-    // Nếu chỉ còn 2 người chơi, chỉ cần 1 người pass là bàn phải trống
     let activePlayers = 4 - state.ranks.length;
-
-    let passNeeded = activePlayers - 1;
+    let passNeeded = Math.max(activePlayers - 1, 1);
     if (state.passCount >= passNeeded) {
         state.current = state.lastPlayer;
-        // Nếu lastPlayer đã về đích thì tìm người chưa về đích gần nhất (ngược chiều kim đồng hồ)
         while (state.ranks.includes(state.current)) {
             state.current = (state.current + 3) % 4;
         }
@@ -251,30 +269,37 @@ function nextTurn() {
         return;
     }
 
-    // Bị skip trong ván → tự động pass
     if (state.skipped[state.current] && state.lastPlayed.length) {
         state.passCount++;
         nextTurn();
         return;
     }
 
-    // Bot
     if (state.players[state.current].bot && !state.ranks.includes(state.current)) setTimeout(botPlay, settings && settings.botDelay ? settings.botDelay : 1500);
     render();
 }
 
+
+/* ======= KIỂM TRA NƯỚC ĐI ======= */
+function isValidPlay(cards, lastPlayed) {
+    if (!cards.length) return false;
+    const info = getHandType(cards);
+    if (!info || info.type === 'invalid') return false;
+    if (!lastPlayed.length || lastPlayed === undefined) return true;
+    return canBeat(lastPlayed, cards);
+}
+
+
 /* ======= NGƯỜI CHƠI ======= */
 async function playerPlay() {
     if (state.current !== 0 || state.winner || state.ranks.includes(0)) return;
-
     const cards = state.selected.map(i => state.players[0].hand[i]);
     if (!cards.length) return;
-    if (!canBeat(state.lastPlayed, cards)) {
-        document.getElementById('message-win').textContent = 'Không hợp lệ!';
+    if (!isValidPlay(cards, state.lastPlayed) || !canBeat(state.lastPlayed, cards)) {
+        alertify.error('Bài không hợp lệ');
         return;
     }
 
-    // Animation
     const flyJobs = [];
     state.selected.forEach((i, k) => {
         const el = document.querySelector(`.card[data-idx="${i}"]`);
@@ -287,11 +312,28 @@ async function playerPlay() {
         flyJobs.push(flyCard(rect, document.getElementById('table'), html, (k - (cards.length - 1) / 2) * 28));
     });
 
-    playSound('play');                    // phát ngay khi rời tay
-    await Promise.all(flyJobs);           // đợi bay xong
+    playSound('play');
+    await Promise.all(flyJobs);
 
-    /* --- Cập nhật state sau animation --- */
     state.players[0].hand = state.players[0].hand.filter((_, i) => !state.selected.includes(i));
+    if (state.lastPlayed.length) {
+        const prev = getHandType(state.lastPlayed);
+        const now = getHandType(cards);
+
+        // Chặt 1 con 2
+        if (prev.type === 'single' && state.lastPlayed[0].rank === 15 &&
+            (now.type === 'four' || (now.type === 'dseq' && cards.length >= 6))) {
+            const beatType = state.lastPlayed[0].suit === '♥' || state.lastPlayed[0].suit === '♦'
+                ? 'single2red' : 'single2black';
+            handleSpecialScore(beatType, 0, state.lastPlayer);
+        }
+
+        // Chặt đôi 2
+        if (prev.type === 'pair' && state.lastPlayed[0].rank === 15 &&
+            (now.type === 'four' || (now.type === 'dseq' && cards.length >= 8))) {
+            handleSpecialScore('double2', 0, state.lastPlayer);
+        }
+    }
     state.lastPlayed = cards;
     sortHand(state.lastPlayed);
     state.played[0] = true;
@@ -299,9 +341,7 @@ async function playerPlay() {
     state.selected = [];
     state.passCount = 0;
 
-    render();                             // giờ mới vẽ bài lên bàn
-
-
+    render();
     if (!state.players[0].hand.length && !state.ranks.includes(0)) {
         playSound('win');
         state.ranks.push(0);
@@ -311,7 +351,7 @@ async function playerPlay() {
 
 
 function playerPass() {
-    playSound('click');
+    playSound('pass');
     if (state.current !== 0 || state.winner || state.ranks.includes(0)) return;
     if (!state.lastPlayed.length || state.lastPlayer === 0) return; // Không được pass lượt đầu
     state.selected = [];
@@ -334,27 +374,22 @@ async function botPlay() {
     let move = null, moves = [];
     let specialBeat = null, specialTarget = null;
 
-    // ====== Tìm tất cả nước hợp lệ ======
-    // Single
     for (let i = 0; i < hand.length; i++) {
         if (canBeat(state.lastPlayed, [hand[i]]))
             moves.push({ cards: [i], type: 'single', rank: hand[i].rank });
     }
 
-    // Pair
     for (let i = 0; i < hand.length - 1; i++) {
         if (hand[i].rank === hand[i + 1].rank && canBeat(state.lastPlayed, [hand[i], hand[i + 1]]))
             moves.push({ cards: [i, i + 1], type: 'pair', rank: hand[i].rank });
     }
 
-    // Triple
     for (let i = 0; i < hand.length - 2; i++) {
         if (hand[i].rank === hand[i + 1].rank && hand[i].rank === hand[i + 2].rank &&
             canBeat(state.lastPlayed, [hand[i], hand[i + 1], hand[i + 2]]))
             moves.push({ cards: [i, i + 1, i + 2], type: 'triple', rank: hand[i].rank });
     }
 
-    // Straight
     for (let len = 3; len <= hand.length; len++) {
         for (let i = 0; i <= hand.length - len; i++) {
             const slice = hand.slice(i, i + len);
@@ -368,7 +403,6 @@ async function botPlay() {
         }
     }
 
-    // Four of a kind
     for (let i = 0; i < hand.length - 3; i++) {
         if (hand[i].rank === hand[i + 1].rank &&
             hand[i].rank === hand[i + 2].rank &&
@@ -377,7 +411,6 @@ async function botPlay() {
             moves.push({ cards: [i, i + 1, i + 2, i + 3], type: 'four', rank: hand[i].rank });
     }
 
-    // Double sequence
     for (let len = 6; len <= hand.length; len += 2) {
         for (let i = 0; i <= hand.length - len; i++) {
             const slice = hand.slice(i, i + len);
@@ -391,53 +424,44 @@ async function botPlay() {
         }
     }
 
-    // ====== AI chọn nước đi ======
     if (moves.length) {
         const prevType = getHandType(state.lastPlayed);
 
-        // Chặt 2
         if (prevType.type === 'single' && state.lastPlayed[0]?.rank === 15) {
+            let chop = moves.filter(m => m.type === 'four' || (m.type === 'dseq' && m.cards.length >= 6));
+            if (chop.length) {
+                chop.sort((a, b) => a.cards.length - b.cards.length || a.rank - b.rank);
+                move = chop[0].cards;
+                specialBeat = state.lastPlayed[0].suit === '♥' || state.lastPlayed[0].suit === '♦'
+                    ? 'single2red' : 'single2black';
+                specialTarget = state.lastPlayer;
+            }
+        } else if (prevType.type === 'pair' && state.lastPlayed[0]?.rank === 15) {
             let chop = moves.filter(m => m.type === 'four' || (m.type === 'dseq' && m.cards.length >= 8));
             if (chop.length) {
                 chop.sort((a, b) => a.cards.length - b.cards.length || a.rank - b.rank);
                 move = chop[0].cards;
-                specialBeat = state.lastPlayed[0].suit === '♥' || state.lastPlayed[0].suit === '♦' ? 'chop2red' : 'chop2';
+                specialBeat = 'double2'
                 specialTarget = state.lastPlayer;
             }
-        }
-        // Chặt đôi 2
-        else if (prevType.type === 'pair' && state.lastPlayed[0]?.rank === 15) {
-            let chop = moves.filter(m => m.type === 'four' || (m.type === 'dseq' && m.cards.length >= 8));
-            if (chop.length) {
-                chop.sort((a, b) => a.cards.length - b.cards.length || a.rank - b.rank);
-                move = chop[0].cards;
-                specialBeat = 'chop2double';
-                specialTarget = state.lastPlayer;
-            }
-        }
-        // Có thể đánh hết bài
-        else {
+        } else {
             let winMove = moves.find(m => m.cards.length === hand.length);
             if (winMove) move = winMove.cards;
         }
 
-        // Ưu tiên theo loại bài trên bàn
-        // ====== AI chọn nước đi ======
-        const stage = getGameStage(hand);          // early | mid | late
+        const stage = getGameStage(hand);
         const rankedMoves = moves.map(m => ({
             ...m,
-            score: scoreMove(m, hand, stage)         // tính điểm
+            score: scoreMove(m, hand, stage)
         }));
 
-        // Chỉ chấm điểm khi chặt 2 không kích hoạt
         if (!move) {
             rankedMoves.sort((a, b) => a.score - b.score || a.rank - b.rank);
-            move = rankedMoves[0]?.cards;            // move tốt nhất
+            move = rankedMoves[0]?.cards;
         }
 
     }
 
-    // ====== Đánh bài ======
     if (move) {
         const cards = move.map(i => hand[i]);
         const table = document.getElementById('table');
@@ -446,10 +470,9 @@ async function botPlay() {
                 : idx === 2 ? document.querySelector('.bot-top')
                     : idx === 3 && document.querySelector('.bot-right');
         const backs = botArea.querySelectorAll('.card-back');
-        const fallbackRect = getStartRect(botArea);      // hàm bạn đã có
+        const fallbackRect = getStartRect(botArea);
         const flyJobs = [];
         cards.forEach((c, k) => {
-            // Lá ở cuối bộ bài tương ứng backs.length-1, rồi -2, -3...
             const backIdx = backs.length - 1 - k;
             const srcRect = backIdx >= 0 ? backs[backIdx].getBoundingClientRect()
                 : fallbackRect;
@@ -461,10 +484,9 @@ async function botPlay() {
             flyJobs.push(flyCard(srcRect, table, html, offset));
         });
 
-        playSound('play');                       // phát tiếng ngay khi rời tay
+        playSound('play');
         await Promise.all(flyJobs);
 
-        // Cập nhật bài (xóa bài đúng theo giá trị)
         for (let card of cards) {
             const index = bot.hand.findIndex(c => c.rank === card.rank && c.suit === card.suit);
             if (index !== -1) bot.hand.splice(index, 1);
@@ -477,12 +499,10 @@ async function botPlay() {
         state.passCount = 0;
         state.skipped[idx] = false;
 
-        // Xử lý điểm đặc biệt
         if (specialBeat && specialTarget != null) {
-            handleSpecialScore(specialBeat, specialTarget, idx);
+            handleSpecialScore(specialBeat, idx, specialTarget);
         }
 
-        // Kiểm tra bot hết bài
         if (!bot.hand.length && !state.ranks.includes(idx)) {
             playSound('win');
             state.ranks.push(idx);
@@ -490,7 +510,7 @@ async function botPlay() {
             return;
         }
     } else {
-        // Không đánh được → Bỏ lượt
+        playSound('pass');
         if (state.lastPlayer !== idx && state.lastPlayed.length) {
             const prev = getHandType(state.lastPlayed);
             if (prev.type === 'dseq' && state.lastPlayed.length >= 8 && state.lastPlayed[0].rank === 15) {
@@ -507,46 +527,37 @@ async function botPlay() {
 
 
 /* ======= SỰ KIỆN ======= */
-// Xử lý điểm khi chặt 2, chặt đôi thông, chặt đôi 2
 function handleSpecialScore(type, who, target) {
-    // stacked = đã có chặt trước đó trên cùng bàn
-    const stacked = state.chopStack > 0;
     const delta = {
-        chop2: stacked ? 20 : 5,
-        chop2red: stacked ? 20 : 10,
-        chop2double: 20,
-        chop3seq: stacked ? 20 : 10
+        single2black: CHOP_SCORE.single2black,
+        single2red: CHOP_SCORE.single2red,
+        double2: CHOP_SCORE.double2
     }[type] || 0;
     if (!delta) return;
 
     playSound('chop');
     scores[who] += delta;
     scores[target] -= delta;
-    showScoreEffect(who, `+${delta}`);
-    showScoreEffect(target, `-${delta}`);
     saveScores(scores);
     updateScoreboard();
 
-    state.chopStack++; // đánh dấu đã có chặt
+    state.chopStack++;
 }
 
-// Xử lý css setting
+
+/*=== SETTINGS CSS ===*/
 let deckstack = document.querySelector('.deck-stack');
-let body = document.body;
-const area = document.getElementById('game-area');
 settings.cardBack && settings.cardBack === 'red' && deckstack.classList.add('card-red');
-settings.background && body.style.background == 'linear-gradient(90deg, ' + settings.background + ' 50%, #fff 100%);';
 
 
-// Hiệu ứng chia bài
+/*=== HIỆU ỨNG CHIA BÀI ===*/
 function animateDeal(callback) {
     const deckCenter = document.getElementById('deck-center');
     const botHands = document.getElementById('bot-hands');
     const playerHand = document.getElementById('player-hand');
-    // Tính vị trí đến của 4 người chơi (center của avatar)
     const getTarget = idx => {
         const el = [
-            document.querySelector('.player-avatar'), // player
+            document.querySelector('.player-avatar'),
             botHands.querySelector('.bot-left .avatar'),
             botHands.querySelector('.bot-top .avatar'),
             botHands.querySelector('.bot-right .avatar')
@@ -555,11 +566,9 @@ function animateDeal(callback) {
         const rect = el.getBoundingClientRect();
         return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     };
-    // Vị trí bộ bài trung tâm
     const deckRect = deckCenter.getBoundingClientRect();
     const deckX = deckRect.left + deckRect.width / 2;
     const deckY = deckRect.top + deckRect.height / 2;
-    // Chia 52 lá, mỗi lá đến 1 vị trí
     let i = 0;
     function dealOne() {
         if (i >= 52) {
@@ -572,7 +581,7 @@ function animateDeal(callback) {
                 document.getElementById('player-controls').style.display = '';
                 document.getElementById('message').style.display = '';
                 if (callback) callback();
-            }, 500);
+            }, 300);
             return;
         }
         const who = i % 4;
@@ -583,17 +592,16 @@ function animateDeal(callback) {
         card.style.top = '0px';
         card.style.opacity = '1';
         deckCenter.appendChild(card);
-        // Tính dịch chuyển
         const dx = target.x - deckX;
         const dy = target.y - deckY;
         setTimeout(() => {
             card.style.transform = `translate(${dx}px,${dy}px) scale(0.5)`;
-            card.style.opacity = '0.2';
+            card.style.opacity = '0.5';
         }, 10);
 
         setTimeout(() => {
             card.remove();
-        }, 500);
+        }, 300);
         i++;
         setTimeout(dealOne, 30);
     }
@@ -603,7 +611,7 @@ function animateDeal(callback) {
 
 document.addEventListener('DOMContentLoaded', () => {
     updateScoreboard();
-    // Ẩn các phần chơi, chỉ hiện bộ bài và nút chia bài
+    playSound('background');
     document.getElementById('bot-hands').style.display = 'none';
     document.getElementById('table').style.display = 'none';
     document.getElementById('player-hand').style.display = 'none';
@@ -614,15 +622,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('deal-btn').style.display = '';
     document.getElementById('settings-btn').style.display = '';
 
-    // Khi nhấn nút chia bài
     document.getElementById('deal-btn').addEventListener('click', () => {
         document.getElementById('deal-btn').style.display = 'none';
         document.getElementById('settings-btn').style.display = 'none';
         document.getElementById('namegame').style.display = 'none';
-        // Hiện avatar bot để lấy vị trí chia bài
         document.getElementById('bot-hands').style.display = '';
-        render(); // render avatar để lấy vị trí
-        // Chia bài hiệu ứng
+        render();
         animateDeal(() => {
             deal();
             render();
@@ -649,42 +654,56 @@ document.addEventListener('DOMContentLoaded', () => {
 const btnOpenSettings = document.getElementById('settings-btn');
 const modalSettings = document.getElementById('settings-modal');
 const btnCloseSettings = document.getElementById('close-settings');
-const btnSaveSettings = document.getElementById('save-settings');   // ← đổi tên biến
+const btnSaveSettings = document.getElementById('save-settings');
 
-// mở/đóng
-btnOpenSettings.onclick = () => { playSound('click'); populateSettingsModal(loadSettings()); modalSettings.style.visibility = 'visible'; };
+btnOpenSettings.onclick = () => {
+    playSound('click');
+    costSettings = 0;
+    document.getElementById('changeInputCost').textContent = 'Tổng 0 🌕';
+    populateSettingsModal(loadSettings());
+    const allInputs = modalSettings.querySelectorAll('input, select');
+    allInputs.forEach(el => {
+        const key = el.id || el.className;
+        el.addEventListener('change', () => {
+            if (changedInputs.has(key)) return;
+            changedInputs.add(key);
+            
+            if (key === 'champion-mode') {
+                if (!el.checked) return;
+                costSettings += 500;
+            } else if (key === 'player-name' || key === 'player-image') {
+                costSettings += 50;
+            } else if (key === 'backgound-music' || key === 'game-sound') {
+                costSettings += 5;
+            } else {
+                costSettings += 20;
+            }
+            document.getElementById('changeInputCost').textContent = `Tổng ${costSettings} 🌕`;
+        });
+    });
+    modalSettings.style.visibility = 'visible';
+
+};
+
 btnCloseSettings.onclick = () => { playSound('click'); modalSettings.style.visibility = 'hidden'; };
 
-// LƯU
-alertify.set('notifier', 'position', 'top-left');
-btnSaveSettings.onclick = () => {
-    /* 1) Gom dữ liệu settings như cũ */
-    playSound('click');
-    const updated = {
-        background: document.getElementById('bg-color').value,
-        tableBackground: document.getElementById('table-color').value,
-        botDelay: +document.getElementById('bot-delay').value || 1500,
-        cardStyle: document.getElementById('card-style').value,
-        cardBack: document.getElementById('card-back').value,
-        players: []
-    };
-    document.querySelectorAll('.player-name').forEach((inp, i) => {
-        updated.players[i] = {
-            name: inp.value.trim() || `Người ${i + 1}`,
-            image: document.querySelectorAll('.player-image')[i].value.trim()
-        };
-    });
 
-    /* 2) Lưu & áp dụng giao diện */
-    if (scores[0] >= 20) {
+/*=== SAVE SETTINGS ===*/
+btnSaveSettings.onclick = () => {
+    playSound('click');
+    const updated = collectSettingsFromModal();
+    if ((scores[0] ?? 0) > costSettings) {
         saveSettings(updated);
         applySettings(updated);
-        scores[0] = (scores[0] ?? 0) - 20;   // bảo toàn mảng scores đã load sẵn
-        saveScores(scores);                  // ghi lại localStorage
+        scores[0] -= costSettings;
+        saveScores(scores);
         updateScoreboard();
-        modalSettings.style.display = 'none';
+        costSettings = 0;
+        changedInputs.clear();
+        modalSettings.style.visibility = 'visible';
         location.reload();
     } else {
-        alertify.error('Cần 20 điểm cho 1 lần cài đặt');
+        alertify.error(`Cần ${costSettings} điểm`);
+        return;
     }
 };
