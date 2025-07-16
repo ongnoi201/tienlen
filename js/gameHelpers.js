@@ -37,15 +37,7 @@ export function playSound(name) {
         clip.loop = false;
     }
     clip.currentTime = 0;
-    const tryPlay = () => {
-        clip.play().catch(() => { /* bỏ qua */ });
-        document.removeEventListener('pointerdown', tryPlay);
-        document.removeEventListener('keydown', tryPlay);
-    };
-    clip.play().catch(() => {
-        document.addEventListener('pointerdown', tryPlay, { once: true });
-        document.addEventListener('keydown', tryPlay, { once: true });
-    });
+    clip.play().catch(() => { });
 }
 
 /* ===== LẤY VỊ TRÍ LÁ BÀI ===== */
