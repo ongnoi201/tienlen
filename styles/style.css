@@ -69,6 +69,32 @@
     position: relative;
 }
 
+.deck-stack::before,
+.deck-stack::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: inherit;
+    border: inherit;
+    border-radius: inherit;
+    box-shadow: inherit;
+    z-index: -1;
+}
+
+.deck-stack::before {
+    top: 3px;
+    left: 2px;
+    opacity: 0.8;
+}
+
+.deck-stack::after {
+    top: 6px;
+    left: 4px;
+    opacity: 0.6;
+}
+
+
 .deal-card {
     width: 60px;
     height: 90px;
@@ -291,7 +317,7 @@ body {
 }
 
 .classic {
-    background: #e8ff19;
+    background: #ffffff;
     box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
 }
 
@@ -382,7 +408,7 @@ body {
     left: 10px;
     width: 40px;
     height: 40px;
-    font-size: 28px;
+    font-size: 35px;
     background: transparent;
     border: none;
     border-radius: 50%;
