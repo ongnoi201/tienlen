@@ -265,7 +265,13 @@ function nextTurn() {
         state.passCount = 0;
         state.skipped = [false, false, false, false];
         render();
-        if (state.players[state.current].bot && !state.ranks.includes(state.current)) setTimeout(botPlay, settings && settings.botDelay ? settings.botDelay : 1500);
+        if (state.players[state.current].bot && !state.ranks.includes(state.current)) {
+            let delay = settings?.botDelay ?? 1500;
+            if (state.ranks.includes(0)) {
+                delay = 600;
+            }
+            setTimeout(botPlay, delay);
+        }
         return;
     }
 
@@ -274,8 +280,13 @@ function nextTurn() {
         nextTurn();
         return;
     }
-
-    if (state.players[state.current].bot && !state.ranks.includes(state.current)) setTimeout(botPlay, settings && settings.botDelay ? settings.botDelay : 1500);
+    if (state.players[state.current].bot && !state.ranks.includes(state.current)) {
+        let delay = settings?.botDelay ?? 1500;
+        if (state.ranks.includes(0)) {
+            delay = 600;
+        }
+        setTimeout(botPlay, delay);
+    }
     render();
 }
 
