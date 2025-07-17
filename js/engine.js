@@ -320,6 +320,20 @@ async function playerPlay() {
         const prev = getHandType(state.lastPlayed);
         const now = getHandType(cards);
 
+        if (prev && now) {
+            if (prev.type === 'dseq' && prev.len === 6) {
+                if (now.type === 'four' || (now.type === 'dseq' && now.len >= 8)) {
+                    handleSpecialScore('chop3seq', 0, state.lastPlayer);
+                } else if (now.type === 'dseq' && now.len === 6 && now.rank > prev.rank) {
+                    handleSpecialScore('chop3seqBy3seq', 0, state.lastPlayer);
+                }
+            } else if (prev.type === 'four' && now.type === 'four' && now.rank > prev.rank) {
+                handleSpecialScore('chop4By4', 0, state.lastPlayer);
+            } else if (prev.type === 'dseq' && prev.len >= 8 && now.type === 'dseq' && now.len >= 8 && now.rank > prev.rank) {
+                handleSpecialScore('chop4seqBy4seq', 0, state.lastPlayer);
+            }
+        }
+
         // Chặt 1 con 2
         if (prev.type === 'single' && state.lastPlayed[0].rank === 15 &&
             (now.type === 'four' || (now.type === 'dseq' && cards.length >= 6))) {
@@ -427,7 +441,7 @@ async function botPlay() {
     if (moves.length) {
         const prevType = getHandType(state.lastPlayed);
 
-        if (prevType.type === 'single' && state.lastPlayed[0]?.rank === 15) {
+        if (prevType.type === 'single' && state.lastPlayed[0]?.rank === 15 && state.lastPlayer !== idx) {
             let chop = moves.filter(m => m.type === 'four' || (m.type === 'dseq' && m.cards.length >= 6));
             if (chop.length) {
                 chop.sort((a, b) => a.cards.length - b.cards.length || a.rank - b.rank);
@@ -436,14 +450,51 @@ async function botPlay() {
                     ? 'single2red' : 'single2black';
                 specialTarget = state.lastPlayer;
             }
-        } else if (prevType.type === 'pair' && state.lastPlayed[0]?.rank === 15) {
+        } else if (prevType.type === 'pair' && state.lastPlayed[0]?.rank === 15 && state.lastPlayer !== idx) {
             let chop = moves.filter(m => m.type === 'four' || (m.type === 'dseq' && m.cards.length >= 8));
             if (chop.length) {
                 chop.sort((a, b) => a.cards.length - b.cards.length || a.rank - b.rank);
                 move = chop[0].cards;
-                specialBeat = 'double2'
+                specialBeat = 'double2';
                 specialTarget = state.lastPlayer;
             }
+
+            if (prevType.type === 'dseq' && prevType.len === 6 && state.lastPlayer !== idx) {
+                const chopByFour = moves.find(m => m.type === 'four');
+                const chopBy4Seq = moves.find(m => m.type === 'dseq' && m.len >= 8);
+
+                if (chopByFour) {
+                    move = chopByFour.cards;
+                    specialBeat = 'chop3seq';
+                    specialTarget = state.lastPlayer;
+                } else if (chopBy4Seq) {
+                    move = chopBy4Seq.cards;
+                    specialBeat = 'chop3seq';
+                    specialTarget = state.lastPlayer;
+                }
+            } else if (prevType.type === 'dseq' && prevType.len === 6) {
+                const stronger3seq = moves.find(m => m.type === 'dseq' && m.len === 6 && m.rank > prevType.rank);
+                if (stronger3seq) {
+                    move = stronger3seq.cards;
+                    specialBeat = 'chop3seqBy3seq';
+                    specialTarget = state.lastPlayer;
+                }
+            } else if (prevType.type === 'four') {
+                const strongerFour = moves.find(m => m.type === 'four' && m.rank > prevType.rank);
+                if (strongerFour) {
+                    move = strongerFour.cards;
+                    specialBeat = 'chop4By4';
+                    specialTarget = state.lastPlayer;
+                }
+            } else if (prevType.type === 'dseq' && prevType.len >= 8) {
+                const stronger4Seq = moves.find(m => m.type === 'dseq' && m.len >= 8 && m.rank > prevType.rank);
+                if (stronger4Seq) {
+                    move = stronger4Seq.cards;
+                    specialBeat = 'chop4seqBy4seq';
+                    specialTarget = state.lastPlayer;
+                }
+            }
+
         } else {
             let winMove = moves.find(m => m.cards.length === hand.length);
             if (winMove) move = winMove.cards;
@@ -531,8 +582,13 @@ function handleSpecialScore(type, who, target) {
     const delta = {
         single2black: CHOP_SCORE.single2black,
         single2red: CHOP_SCORE.single2red,
-        double2: CHOP_SCORE.double2
+        double2: CHOP_SCORE.double2,
+        chop3seq: CHOP_SCORE.chop3seq,
+        chop3seqBy3seq: CHOP_SCORE.chop3seqBy3seq,
+        chop4By4: CHOP_SCORE.chop4By4,
+        chop4seqBy4seq: CHOP_SCORE.chop4seqBy4seq,
     }[type] || 0;
+
     if (!delta) return;
 
     playSound('chop');
@@ -543,6 +599,7 @@ function handleSpecialScore(type, who, target) {
 
     state.chopStack++;
 }
+
 
 
 /*=== SETTINGS CSS ===*/
@@ -667,9 +724,8 @@ btnOpenSettings.onclick = () => {
         el.addEventListener('change', () => {
             if (changedInputs.has(key)) return;
             changedInputs.add(key);
-            
+
             if (key === 'champion-mode') {
-                if (!el.checked) return;
                 costSettings += 500;
             } else if (key === 'player-name' || key === 'player-image') {
                 costSettings += 50;

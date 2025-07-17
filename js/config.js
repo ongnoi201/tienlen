@@ -5,5 +5,9 @@ export const SCORE_KEY = 'tienlen_scores';
 export const CHOP_SCORE = {
     single2black: 5,
     single2red: 10,
-    double2: 20
+    double2: 20,
+    chop3seq: 30, 
+    chop3seqBy3seq: 20, 
+    chop4By4: 20,
+    chop4seqBy4seq: 30,
 };

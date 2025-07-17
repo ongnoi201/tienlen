@@ -89,33 +89,6 @@ export function flyCard(startRect, tableEl, html, landingOffset = 0) {
 }
 
 
-// /* ===== HIỂN THỊ ĐIỂM ===== */
-// export function showScoreEffect(avatarEl, text) {
-//     if (!avatarEl) return;
-//     const eff = document.createElement('span');
-//     eff.textContent = text;
-//     Object.assign(eff.style, {
-//         position: 'absolute',
-//         left: '50%',
-//         top: '0',
-//         transform: 'translate(-50%,-80%)',
-//         fontSize: '22px',
-//         fontWeight: 'bold',
-//         color: text.startsWith('+') ? '#43a047' : '#d32f2f',
-//         textShadow: '1px 1px 4px #222,0 0 8px #fff8',
-//         pointerEvents: 'none',
-//         zIndex: 9999999999
-//     });
-//     avatarEl.parentElement.appendChild(eff);
-//     setTimeout(() => {
-//         eff.style.transition = 'all .8s cubic-bezier(.7,1.7,.5,1)';
-//         eff.style.top = '-40px';
-//         eff.style.opacity = '0';
-//     }, 50);
-//     setTimeout(() => eff.remove(), 1200);
-// }
-
-
 /* === TRẠNG THÁI GAME & SCORE === */
 export function loadScores() {
     let s = localStorage.getItem(SCORE_KEY);

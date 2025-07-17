@@ -29,14 +29,55 @@ export function isDoubleSeq(cs) {
 }
 
 export function getHandType(cs) {
-    if (cs.length === 1) return { type: 'single', value: cs[0].rank };
-    if (cs.length === 2 && cs[0].rank === cs[1].rank) return { type: 'pair', value: cs[0].rank };
-    if (cs.length === 3 && cs.every(c => c.rank === cs[0].rank)) return { type: 'triple', value: cs[0].rank };
-    if (isStraight(cs)) return { type: 'straight', value: cs[cs.length - 1].rank, len: cs.length };
-    if (isFour(cs)) return { type: 'four', value: cs[0].rank };
-    if (isDoubleSeq(cs)) return { type: 'dseq', value: cs[cs.length - 2].rank, len: cs.length / 2 };
+    if (cs.length === 1) return { type: 'single', rank: cs[0].rank };
+
+    if (cs.length === 2 && cs[0].rank === cs[1].rank) return {
+        type: 'pair',
+        rank: cs[0].rank,
+    };
+
+    if (cs.length === 3 && cs.every(c => c.rank === cs[0].rank)) return {
+        type: 'triple',
+        rank: cs[0].rank,
+    };
+
+    if (isFour(cs)) return {
+        type: 'four',
+        rank: cs[0].rank,
+        len: 4
+    };
+
+    if (isStraight(cs)) {
+        const sorted = [...cs].sort((a, b) => a.rank - b.rank);
+        return {
+            type: 'straight',
+            rank: sorted[0].rank,
+            len: cs.length
+        };
+    }
+
+    if (isDoubleSeq(cs)) {
+        const ranks = cs.map(c => c.rank).sort((a, b) => a - b);
+        const freq = {};
+        for (const r of ranks) freq[r] = (freq[r] || 0) + 1;
+
+        const unique = Object.keys(freq).map(Number).sort((a, b) => a - b);
+        const isSeq = unique.every((r, i, arr) => i === 0 || r === arr[i - 1] + 1);
+        const isAllPairs = Object.values(freq).every(v => v === 2);
+
+        if (isSeq && isAllPairs && unique[unique.length - 1] < 15) {
+            return {
+                type: 'dseq',
+                rank: unique[0],
+                len: cs.length,
+                pairs: unique.length,
+            };
+        }
+    }
+
     return { type: 'invalid' };
 }
+
 
 export function canBeat(prev, next) {
     if (!prev || !prev.length) return true;
@@ -82,8 +123,8 @@ export function canBeat(prev, next) {
 
     /* ==== SO SÁNH CÙNG KIỂU / CÙNG ĐỘ DÀI ==== */
     if (a.type === b.type && prev.length === next.length) {
-        if (b.value > a.value) return true;
-        if (b.value === a.value) {
+        if (b.rank > a.rank) return true;
+        if (b.rank === a.rank) {
             switch (b.type) {
                 case 'single':
                     return SUITS.indexOf(next[0].suit) > SUITS.indexOf(prev[0].suit);

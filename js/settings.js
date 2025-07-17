@@ -18,14 +18,13 @@ const DEFAULT_SETTINGS = {
 
 const SETTINGS_KEY = 'tienlen_settings';
 
-/* -------- LẤY SETTINGS -------- */
+/* ===== LẤY SETTINGS ===== */
 export function loadSettings() {
     try {
         const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
-        /* Gộp từng người chơi – luôn KHÔNG lấy hand từ storage */
         const players = DEFAULT_SETTINGS.players.map((def, i) => ({
             ...def,
-            ...(saved.players?.[i] ?? {})       // name + image (và bot nếu có)
+            ...(saved.players?.[i] ?? {})
         }));
         return { ...DEFAULT_SETTINGS, ...saved, players, champion: saved.champion ?? DEFAULT_SETTINGS.champion, };
     } catch {
@@ -33,15 +32,14 @@ export function loadSettings() {
     }
 }
 
-/* -------- LƯU SETTINGS -------- */
+/* ===== LƯU SETTINGS ===== */
 export function saveSettings(newSettings) {
-    /* Chỉ lưu dữ liệu tĩnh – KHÔNG lưu hand */
     const sanitized = {
         ...newSettings,
         players: newSettings.players.map((p, i) => ({
             name: p.name,
             image: p.image,
-            bot: DEFAULT_SETTINGS.players[i].bot   // luôn giữ cờ bot
+            bot: DEFAULT_SETTINGS.players[i].bot
         })),
         champion: newSettings.champion ? 1 : 0,
     };
@@ -54,21 +52,18 @@ export function applySettings(settings) {
     const area = document.getElementById('game-area');
     if (table) table.style.background = settings.tableBackground;
 
-    // Đổi mặt sau thẻ bài
     const backs = document.querySelectorAll('.card-back');
     backs.forEach(card => {
         card.classList.remove('red', 'blue', 'green');
         card.classList.add(settings.cardBack);
     });
 
-    // Đổi style .card (ví dụ: thêm viền, bo góc, đổ bóng,…)
     const cards = document.querySelectorAll('.card');
     cards.forEach(card => {
         card.classList.remove('classic', 'modern');
         card.classList.add(settings.cardStyle);
     });
 
-    // Đổi avatar và tên người chơi
     const avatars = document.querySelectorAll('.avatar');
     avatars.forEach((img, idx) => {
         if (settings.players[idx]) {
@@ -88,16 +83,13 @@ export function applySettings(settings) {
     });
 }
 
-// Biến delay bot dùng trong engine.js
 export let settings = loadSettings();
 export let BOT_DELAY = settings.botDelay;
 export let CHAMPION_MODE = !!settings.champion;
 
-// Hỗ trợ gọi từ engine.js
 export function playBotLater() {
     setTimeout(botPlay, BOT_DELAY);
 }
-
 
 export function populateSettingsModal(settings) {
     document.getElementById('bg-color').value = settings.background;

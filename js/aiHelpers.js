@@ -12,7 +12,7 @@ export const countTwos = cards => cards.filter(c => c.rank === 15).length;
 
 export const isBomb = (type, cards) =>
     type === 'four' ||
-    (type === 'dseq' && cards.length >= 6 && cards[0].rank >= 11);
+    (type === 'dseq' && cards.length >= 6 && Math.min(...cards.map(c => c.rank)) >= 11);
 
 export function getGameStage(botHand) {
     const n = botHand.length;
